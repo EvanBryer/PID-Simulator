@@ -90,7 +90,7 @@ function calcParam() {
     // Update Acceleration
     let diff = target - robot.vel;
     // If velocity can be set to target within the parameters of acceleration, set it
-    if(diff <= robot.acc*constants.dt) {
+    if(abs(diff) <= robot.acc*constants.dt) {
         robot.vel = target;
     } else {
         // Otherwise, change acceleration to affect velocity
