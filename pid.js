@@ -1,7 +1,7 @@
 /* PID Constants */
 let pid = {
     kP: 0.1, // P = kP * error
-    kI: 0.0005, // I = kI * accumulated error
+    kI: 0.00001, // I = kI * accumulated error
     kD: 0.0,
     accError: 0
 }
@@ -25,9 +25,9 @@ let robot = {
     y: ground.pos+ground.size,
     weight: 60,
     size: 20,
-    maxVel: 10, 
-    maxAcc: 2,
-    MaxJerk: 1,
+    maxVel: 35, 
+    maxAcc: 5,
+    maxJerk: 1,
     acc: 0,
     vel: 0,
 };
@@ -65,10 +65,34 @@ function drawRobot() {
     fill(c);
     square(robot.x, height-robot.y, robot.size);
     // Update robot params
+    calcParam();
+}
+
+function calcParam() {
+    // Calculate new position
     robot.x += (robot.vel*constants.dt) + (.5*robot.acc*pow(constants.dt,2));
+    // Calculate error and update accumulated error
     let error = (width-finish.x) - robot.x;
     pid.accError+= error;
-    robot.vel = error*pid.kP + pid.kI*pid.accError;
+    // Find Target
+    let target = error*pid.kP + pid.kI*pid.accError;
+    // Update Acceleration
+    let diff = target - robot.vel;
+    if(diff <= robot.acc*constants.dt) {
+        robot.vel = target;
+    } else {
+        if(diff < 0) {
+            robot.acc -= robot.maxJerk*constants.dt;
+            if(robot.maxAcc < abs(robot.acc)) robot.acc = -robot.maxAcc;
+        }
+        else {
+            robot.acc += robot.maxJerk*constants.dt;
+            if(robot.maxAcc < abs(robot.acc)) robot.acc = robot.maxAcc;
+        }
+        robot.vel += robot.acc*constants.dt;
+    }
+    if(robot.vel < 0 && abs(robot.vel) > robot.maxVel) robot.vel = -robot.maxVel;
+    if(robot.vel > 0 && abs(robot.vel) > robot.maxVel) robot.vel = robot.maxVel;
 }
 
 function drawGround() {
@@ -76,3 +100,4 @@ function drawGround() {
     fill(c); // Use color variable 'c' as fill color
     rect(0, height - ground.pos, width, ground.size); // Create ground
 }
+
