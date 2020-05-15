@@ -1,3 +1,5 @@
+/* Boolean controlling process */
+let run = false;
 /* PID Constants */
 let pid = {
     kP: 0.1, // P = kP * error
@@ -45,14 +47,17 @@ let finish = {
 /* Runs once, at the start. Creates the canvas in this case */
 function setup() {
     createCanvas(500, 500);
+    drawInputs();
 }
 
 /* Runs continuously, until stopped */
 function draw() {
     background(220); //Set background color
     drawGround();
-    drawRobot();
-    checkFinish();
+    if(run) {
+        drawRobot();
+        checkFinish();
+    }
 }
 
 function checkFinish() {
@@ -114,5 +119,89 @@ function drawGround() {
     let c = color(0, 0, 0); // Define color 'c'
     fill(c); // Use color variable 'c' as fill color
     rect(0, height - ground.pos, width, ground.size); // Create ground
+}
+
+function drawInputs() {
+    let mvelIn, mvel, maccIn, macc, mjerkIn, mjerk, fricIn, fric;
+    let i, it, iIn, itIn, d, dIn, start, restart;
+    
+    mvelIn = createInput(robot.maxVel);
+    mvelIn.position(windowWidth-mvelIn.width, 50);
+    mvel = createButton('Max Vel');
+    mvel.position(mvelIn.x - mvelIn.width/2, 50);
+    mvel.mousePressed(() => {
+        robot.maxVel = mvelIn.value();
+    });
+    
+    maccIn = createInput(robot.maxAcc);
+    maccIn.position(windowWidth-maccIn.width, 90);
+    macc = createButton('Max Acc');
+    macc.position(maccIn.x - maccIn.width/2, 90);
+    macc.mousePressed(() => {
+        robot.maxAcc = maccIn.value();
+    });
+    
+    mjerkIn = createInput(robot.maxJerk);
+    mjerkIn.position(windowWidth-mjerkIn.width, 130);
+    mjerk = createButton('Max Jerk');
+    mjerk.position(mjerkIn.x - mjerkIn.width/2, 130);
+    mjerk.mousePressed(() => {
+        robot.maxJerk = mjerkIn.value();
+    });
+    
+    fricIn = createInput(constants.friction);
+    fricIn.position(windowWidth-fricIn.width, 170);
+    fric = createButton('Friction');
+    fric.position(fricIn.x - fricIn.width/2, 170);
+    fric.mousePressed(() => {
+        constants.friction = fricIn.value();
+    });
+    
+    pIn = createInput(pid.kP);
+    pIn.position(windowWidth-pIn.width, 210);
+    p = createButton('kP');
+    p.position(pIn.x - pIn.width/2, 210);
+    p.mousePressed(() => {
+        pid.kP = pIn.value();
+    });
+    
+    iIn = createInput(pid.kI);
+    iIn.position(windowWidth-iIn.width, 250);
+    i = createButton('kI');
+    i.position(iIn.x - iIn.width/2, 250);
+    i.mousePressed(() => {
+        pid.kI = iIn.value();
+    });
+    
+    dIn = createInput(pid.kD);
+    dIn.position(windowWidth-dIn.width, 290);
+    d = createButton('kD');
+    d.position(dIn.x - dIn.width/2, 290);
+    d.mousePressed(() => {
+        pid.kD = dIn.value();
+    });
+    
+    itIn = createInput(pid.iThresh);
+    itIn.position(windowWidth-itIn.width, 330);
+    it = createButton('IThresh');
+    it.position(itIn.x - itIn.width/2, 330);
+    it.mousePressed(() => {
+        pid.iThresh = itIn.value();
+    });
+    
+    it = createButton('Start');
+    it.position(itIn.x+itIn.width/2, 370);
+    it.mousePressed(() => {
+        run = true;
+    });
+    
+    it = createButton('Restart');
+    it.position(itIn.x - itIn.width/2+50, 370);
+    it.mousePressed(() => {
+        robot.x = 0;
+        robot.vel = 0;
+        robot.acc = 0;
+        run = false;
+    });
 }
 
