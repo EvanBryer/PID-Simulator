@@ -2,9 +2,10 @@
 let pid = {
     kP: 0.1, // P = kP * error
     kI: 0.00001, // I = kI * accumulated error
-    kD: 0.0,
+    kD: 0.00001, // I = kD * dE / dT
     accError: 0,
-    iThresh: 15 // The threshhold for I to start accumulating
+    iThresh: 15, // The threshhold for I to start accumulating
+    prevErr: -1 // Previous error, used for D
 }
 
 /* Simulation Constants */
@@ -74,10 +75,13 @@ function calcParam() {
     robot.x += (robot.vel*constants.dt) + (.5*robot.acc*pow(constants.dt,2));
     // Calculate error and update accumulated error
     let error = (width-finish.x) - robot.x;
+    // If first run, ignore prevErr to prevent D from causing problems
+    if(pid.prevErr == -1) pid.prevErr = error;
     if(abs(error) < pid.iThresh)
         pid.accError+= error;
     // Find Target
-    let target = error*pid.kP + pid.kI*pid.accError;
+    let target = (error*pid.kP) + (pid.kI*pid.accError) + (pid.kD * ((error-pid.prevErr)/constants.dt));
+    pid.prevError = error;
     // Update Acceleration
     let diff = target - robot.vel;
     // If velocity can be set to target within the parameters of acceleration, set it
@@ -104,7 +108,6 @@ function calcParam() {
     // Adjust due to friction
     if(robot.vel < 0) robot.vel += robot.vel*((robot.mass*constants.gravity) * constants.friction);
     if(robot.vel > 0) robot.vel -= robot.vel*((robot.mass*constants.gravity) * constants.friction);
-    
 }
 
 function drawGround() {
