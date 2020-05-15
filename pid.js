@@ -3,14 +3,15 @@ let pid = {
     kP: 0.1, // P = kP * error
     kI: 0.00001, // I = kI * accumulated error
     kD: 0.0,
-    accError: 0
+    accError: 0,
+    iThresh: 15 // The threshhold for I to start accumulating
 }
 
 /* Simulation Constants */
 let constants = {
     dt: 0.1, // The amount of time between cycles
     gravity: 9.8, // Gravitational constant
-    friction: 0.1, // Friction between ground and robot
+    friction: 0.000001, // Friction between ground and robot
 }
 
 /* Ground object, use to configure friction and position */
@@ -23,7 +24,7 @@ let ground = {
 let robot = {
     x: 0,
     y: ground.pos+ground.size,
-    weight: 60,
+    mass: 60,
     size: 20,
     maxVel: 35, 
     maxAcc: 5,
@@ -73,14 +74,17 @@ function calcParam() {
     robot.x += (robot.vel*constants.dt) + (.5*robot.acc*pow(constants.dt,2));
     // Calculate error and update accumulated error
     let error = (width-finish.x) - robot.x;
-    pid.accError+= error;
+    if(abs(error) < pid.iThresh)
+        pid.accError+= error;
     // Find Target
     let target = error*pid.kP + pid.kI*pid.accError;
     // Update Acceleration
     let diff = target - robot.vel;
+    // If velocity can be set to target within the parameters of acceleration, set it
     if(diff <= robot.acc*constants.dt) {
         robot.vel = target;
     } else {
+        // Otherwise, change acceleration to affect velocity
         if(diff < 0) {
             robot.acc -= robot.maxJerk*constants.dt;
             if(robot.maxAcc < abs(robot.acc)) robot.acc = -robot.maxAcc;
@@ -89,10 +93,18 @@ function calcParam() {
             robot.acc += robot.maxJerk*constants.dt;
             if(robot.maxAcc < abs(robot.acc)) robot.acc = robot.maxAcc;
         }
+        // Update Velocity
         robot.vel += robot.acc*constants.dt;
     }
+    
+    //Change velocity to fit within the max velocity parameters
     if(robot.vel < 0 && abs(robot.vel) > robot.maxVel) robot.vel = -robot.maxVel;
     if(robot.vel > 0 && abs(robot.vel) > robot.maxVel) robot.vel = robot.maxVel;
+    
+    // Adjust due to friction
+    if(robot.vel < 0) robot.vel += robot.vel*((robot.mass*constants.gravity) * constants.friction);
+    if(robot.vel > 0) robot.vel -= robot.vel*((robot.mass*constants.gravity) * constants.friction);
+    
 }
 
 function drawGround() {
